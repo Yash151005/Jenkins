@@ -2,43 +2,35 @@ pipeline {
     agent any
 
     tools {
-        maven 'Maven'
+        maven 'Maven' // Make sure this matches Jenkins global tool name
     }
 
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Yash151005/Jenkins.git'
+                git branch: 'main', url: 'https://github.com/Yash151005/jenkins.git'
             }
         }
 
         stage('Build') {
             steps {
-                sh 'mvn clean package'
+                dir('.') {  // ensure Maven runs in repo root
+                    sh 'mvn clean package'
+                }
             }
         }
 
         stage('Deploy') {
             steps {
-                script {
-                    // Copy WAR to VM2 (Docker host)
-                    sh 'scp target/myapp.war azureuser@57.159.29.82:/home/azureuser/'
-
-                    // Deploy WAR into Docker Tomcat
-                    sh """
-                        ssh azureuser@<VM2-IP> '
-                        docker cp /home/azureuser/myapp.war myapp:/usr/local/tomcat/webapps/ &&
-                        docker restart myapp
-                        '
-                    """
-                }
+                // Copy WAR into Docker Tomcat container on VM2
+                sh 'scp target/myapp.war azureuser@52.225.85.234:/home/azureuser/'
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment Successful!'
+            echo '✅ Build and Deployment Successful!'
         }
         failure {
             echo '❌ Build or Deployment Failed.'
