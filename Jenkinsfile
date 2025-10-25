@@ -8,36 +8,19 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/<username>/<repo>.git'
+                git branch: 'main', url: 'https://github.com/Yash151005/Jenkins.git'
             }
         }
-
         stage('Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
-
-        stage('Test') {
-            steps {
-                sh 'mvn test'
-            }
-        }
-
         stage('Deploy') {
             steps {
-                script {
-                    // Stop old container if exists
-                    sh 'docker rm -f myapp || true'
-
-                    // Run new container with WAR
-                    sh '''
-                    docker run -d --name myapp \
-                        -p 8080:8080 \
-                        -v $WORKSPACE/target:/usr/local/tomcat/webapps \
-                        tomcat:9.0.78-jdk17
-                    '''
-                }
+                // Copy WAR into Docker container
+                sh 'docker cp target/myapp.war myapp:/usr/local/tomcat/webapps/'
+                sh 'docker restart myapp'
             }
         }
     }
