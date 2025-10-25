@@ -8,33 +8,36 @@ pipeline {
     stages {
         stage('Checkout Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/Yash151005/Jenkins.git'
+                git branch: 'main', url: 'https://github.com/<username>/<repo>.git'
             }
         }
+
         stage('Build') {
             steps {
                 sh 'mvn clean package'
             }
         }
+
         stage('Test') {
             steps {
                 sh 'mvn test'
             }
         }
+
         stage('Deploy') {
             steps {
-                sshPublisher(publishers: [
-                    sshPublisherDesc(configName: 'deploy-server',
-                    transfers: [
-                        sshTransfer(
-                            sourceFiles: 'target/*.war',
-                            remoteDirectory: '/var/lib/tomcat9/webapps',
-                            removePrefix: 'target'
-                        )
-                    ],
-                    usePromotionTimestamp: false,
-                    verbose: true)
-                ])
+                script {
+                    // Stop old container if exists
+                    sh 'docker rm -f myapp || true'
+
+                    // Run new container with WAR
+                    sh '''
+                    docker run -d --name myapp \
+                        -p 8080:8080 \
+                        -v $WORKSPACE/target:/usr/local/tomcat/webapps \
+                        tomcat:9.0.78-jdk17
+                    '''
+                }
             }
         }
     }
