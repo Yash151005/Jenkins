@@ -13,7 +13,45 @@ pipeline {
         }
 
         stage('Build') {
+            steps {pipeline {
+    agent any
+
+    tools {
+        maven 'Maven'
+    }
+
+    stages {
+        stage('Checkout Code') {
             steps {
+                git branch: 'main', url: 'https://github.com/Yash151005/Jenkins.git'
+            }
+        }
+
+        stage('Build') {
+            steps {
+                dir('.') {  // ensures Maven runs in repo root
+                    sh 'mvn clean package'
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo 'WAR will be deployed manually or via docker cp later'
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Build Successful!'
+        }
+        failure {
+            echo '❌ Build Failed.'
+        }
+    }
+}
+
                 dir('.') {  // ensure Maven runs in repo root
                     sh 'mvn clean package'
                 }
